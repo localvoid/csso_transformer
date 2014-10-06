@@ -2,7 +2,7 @@
 // the AUTHORS file for details. All rights reserved. Use of this source code
 // is governed by a BSD-style license that can be found in the LICENSE file.
 
-/* Transfomer that minifies css files with csso tool. */
+/// Transfomer that minifies css files with csso tool.
 library csso_transformer;
 
 import 'dart:async';
@@ -10,15 +10,17 @@ import 'dart:io';
 import 'package:barback/barback.dart';
 import 'package:path/path.dart' as ospath;
 
-/**
- * Transformer Options:
- *
- * [restructure] Enable structure minimization. DEFAULT: true
- */
+/// Transformer Options:
+///
+/// * [executable] Path to the css executable. DEFAULT: `'csso'`
+/// * [restructure] Enable structure minimization. DEFAULT: `true`
 class TransformerOptions {
+  static const _defaultExecutable = 'csso';
+
+  final String executable;
   final bool restructure;
 
-  TransformerOptions(this.restructure);
+  TransformerOptions(this.executable, this.restructure);
 
   factory TransformerOptions.parse(Map configuration) {
     config(key, defaultValue) {
@@ -26,13 +28,13 @@ class TransformerOptions {
       return value != null ? value : defaultValue;
     }
 
-    return new TransformerOptions(config('restructure', true));
+    return new TransformerOptions(
+        config('executable', _defaultExecutable),
+        config('restructure', true));
   }
 }
 
-/**
- * Parses css and adds vendor prefixes to CSS rules.
- */
+/// Parses css and adds vendor prefixes to CSS rules.
 class CssoTransformer extends Transformer implements DeclaringTransformer {
   final BarbackSettings _settings;
   final TransformerOptions _options;
@@ -59,7 +61,7 @@ class CssoTransformer extends Transformer implements DeclaringTransformer {
         fileSink = file.openWrite();
         return fileSink.addStream(asset.read());
       }).then((file) {
-        return _csso(file.path, _options.restructure);
+        return _csso(_options.executable, file.path, _options.restructure);
       }).then((result) {
         transform.addOutput(
             new Asset.fromString(transform.primaryInput.id, result));
@@ -81,14 +83,14 @@ class CssoTransformer extends Transformer implements DeclaringTransformer {
   }
 }
 
-Future<String> _csso(String path, bool restructure) {
+Future<String> _csso(String executable, String path, bool restructure) {
   var flags = [];
   if (!restructure) {
     flags.add('--restructure-off');
   }
   flags.add(path);
 
-  return Process.run('csso', flags).then((result) {
+  return Process.run(executable, flags).then((result) {
     if (result.exitCode == 0) {
       return result.stdout;
     }

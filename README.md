@@ -22,6 +22,13 @@ transformers:
 
 ## Options
 
+### `executable`
+
+Path to the [csso](https://github.com/css/csso) executable.
+
+TYPE: `String`  
+DEFAULT: `csso`
+
 ### `restructure`
 
 Enable structure minimization.
